@@ -1,4 +1,5 @@
-import { Request } from 'express';
+// src/types/express/index.d.ts
+import 'express';
 
 declare global {
   namespace Express {
