@@ -1,0 +1,59 @@
+Dragon_Ascent.pdf
+# ===== Node / Frontend =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# ===== Python / Backend =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+env/
+
+# FastAPI / Django runtime
+*.log
+logs/
+
+# ===== AI / ML =====
+models/*.h5
+models/*.pt
+models/*.onnx
+data/
+uploads/
+temp_images/
+
+# ===== Databases =====
+*.sqlite3
+*.db
+redis.dump
+
+# ===== OS & Editor =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== Security =====
+*.key
+*.pem
+secrets/
