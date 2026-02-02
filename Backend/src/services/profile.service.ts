@@ -15,27 +15,29 @@ async function queryProfile(deviceId:string,nickName?:string,shortBio?:string,pr
         return newProfile;
     }
     if (nickName !== undefined) {
-  profile.nickName = nickName;
-}
+      profile.nickName = nickName;
+    }
 
-if (shortBio !== undefined) {
-  profile.shortBio = shortBio;
-}
+    if (shortBio !== undefined) {
+      profile.shortBio = shortBio;
+    }
 
-if (pronouns !== undefined) {
-  profile.pronouns = pronouns;
-}
+    if (pronouns !== undefined) {
+      profile.pronouns = pronouns;
+    }
 
-if (verifiedGender !== undefined) {
-  profile.verifiedGender = verifiedGender;
-}
+    if (verifiedGender !== undefined) {
+      profile.verifiedGender = verifiedGender;
+    }
 
-if (preferredPartnerGender !== undefined) {
-  profile.preferredPartnerGender = preferredPartnerGender;
-}
+    if (preferredPartnerGender !== undefined) {
+      profile.preferredPartnerGender = preferredPartnerGender;
+    }
 
-await profile.save();
-return profile;
-}
+    await profile.save();
+    return profile;
+  }
 
-//recovered
+
+export default queryProfile;
+  //recovered
