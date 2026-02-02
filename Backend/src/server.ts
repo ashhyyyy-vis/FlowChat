@@ -1,19 +1,35 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
+
 import http from "http";
+import { Server } from "socket.io";
 import app from "./app";
 import redisClient, { connectRedis } from "./config/redis";
 
+
 const PORT = process.env.PORT || 3000;
 
-async function startServer() {
-  await connectRedis(); // ✅ THIS is what you call
+// 1️⃣ CREATE shared infrastructure (top-level)
+const server = http.createServer(app);
 
-  // TEMP test (remove later)
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+export { io };
+export default server;
+
+import "./sockets";
+async function startServer() {
+  await connectRedis();
+
+  // temp sanity check
   await redisClient.set("health", "ok");
   console.log(await redisClient.get("health"));
 
-  const server = http.createServer(app);
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

@@ -1,6 +1,6 @@
 import redisClient from "../config/redis";
 //import genlimits from "../utils/constant";
-export type Gender = "male" | "female" | "other";
+export type Gender = "male" | "female" | "other"|"any";
 
 
 function queueKey(gender: Gender) {

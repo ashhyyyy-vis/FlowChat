@@ -2,7 +2,7 @@
 import Limit from "../models/limit"
 import { genlimits } from "../utils/constant"
 
-async function getlimit(deviceId: string) {   
+export async function getlimit(deviceId: string) {   
 
     const limit = await Limit.findOne({deviceId: deviceId});
     const today:string=new Date().toISOString().split('T')[0]
@@ -28,7 +28,4 @@ async function getlimit(deviceId: string) {
         throw err;
     }
     return limit;
-}    
-export default {
-    getlimit
-};
+}
