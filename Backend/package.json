@@ -16,6 +16,7 @@
     "express": "^5.2.1",
     "mongoose": "^9.1.5",
     "redis": "^5.10.0",
+    "redis-cli": "^2.1.2",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

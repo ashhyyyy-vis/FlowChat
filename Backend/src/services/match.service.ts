@@ -1,6 +1,5 @@
-import { dequeueUser, Gender } from "./queue.service";
+import { dequeueUser, Gender , getQueuedUsers} from "./queue.service";
 import redisClient from "../config/redis";
-import genlimits from "../utils/constant";
 type Preference = "male" | "female" | "other" | "any";
 
 interface MatchRequest {
@@ -11,12 +10,10 @@ preference: Preference;
 
 async function getCandidates(
 gender: Gender,
-limit = genlimits
+limit = 85
 ): Promise<string[]> {
-const key = queueKey(gender);
-
-// ZRANGE returns members ordered by score (oldest first)
-return await redisClient.zRange(key, 0, limit - 1);
+const key =await getQueuedUsers(gender);
+return key;
 }
 
 export async function findMatch(

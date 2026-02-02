@@ -1,5 +1,5 @@
 import redisClient from "../config/redis";
-import genlimits from "../utils/constant";
+//import genlimits from "../utils/constant";
 export type Gender = "male" | "female" | "other";
 
 
@@ -42,4 +42,14 @@ export async function dequeueUser(
   const key = queueKey(gender);
   await redisClient.zRem(key, deviceId);
 }
+
+export async function getQueuedUsers(
+  gender: Gender,
+  limit = 20
+): Promise<string[]> {
+  const key = queueKey(gender);
+
+  return await redisClient.zRange(key, 0, limit - 1);
+}
+
 
