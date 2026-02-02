@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import cors from "cors";
 import deviceIdMiddleware from "./middleware/deviceId";
 import onboardingRoute from "./routes/onboarding.routes";
+import reportRoutes from "./routes/report.routes";
+
 // Create the Express application
 const app = express();
 
@@ -12,16 +14,18 @@ app.use(express.json());
 
 app.use(deviceIdMiddleware);
 app.use(onboardingRoute);
+// app.ts or index.ts
+
+app.use("/api/report", reportRoutes);
+
 
 // Error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack);
-    const status = err.status || 500;
-    res.status(status).json({
-        success: false,
-        message: err.message
-    });
-});
+import { errorHandler } from "./middleware/errorHandler";
+
+// ... all routes above this
+
+app.use(errorHandler);
+
 
 // Export the configured app
 export default app;

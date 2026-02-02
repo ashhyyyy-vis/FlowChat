@@ -1,5 +1,4 @@
 import { dequeueUser , getQueuedUsers} from "./queue.service";
-import redisClient from "../config/redis";
 import {MatchRequest,Gender,Preference} from "../domain/types";
 
 async function getCandidates(
