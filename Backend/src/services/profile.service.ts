@@ -1,43 +1,49 @@
-import Profile from '../models/profile'
+import Profile from '../models/profile';
+import { Gender, Preference } from '../domain/types';
 
-async function queryProfile(deviceId:string,nickName?:string,shortBio?:string,pronouns?:string,verifiedGender?:string,preferredPartnerGender?:string){
-    const profile=await Profile.findOne({deviceId:deviceId});
+async function queryProfile(
+  deviceId: string,
+  nickName?: string,
+  shortBio?: string,
+  pronouns?: string,
+  verifiedGender?: Gender,  // Updated type
+  preferredPartnerGender?: Preference  // Updated type
+) {
+    const profile = await Profile.findOne({ deviceId });
 
-    if(!profile){
-        const newProfile= await Profile.create({
-            deviceId:deviceId,
-            nickName:nickName,
-            shortBio: shortBio,
-            pronouns: pronouns,
-            verifiedGender: verifiedGender,
-            preferredPartnerGender: preferredPartnerGender
-        })
-        return newProfile;
+    if (!profile) {
+        return await Profile.create({
+            deviceId,
+            nickName,
+            shortBio,
+            pronouns,
+            verifiedGender,
+            preferredPartnerGender
+        });
     }
+
     if (nickName !== undefined) {
-      profile.nickName = nickName;
+        profile.nickName = nickName;
     }
 
     if (shortBio !== undefined) {
-      profile.shortBio = shortBio;
+        profile.shortBio = shortBio;
     }
 
     if (pronouns !== undefined) {
-      profile.pronouns = pronouns;
+        profile.pronouns = pronouns;
     }
 
     if (verifiedGender !== undefined) {
-      profile.verifiedGender = verifiedGender;
+        profile.verifiedGender = verifiedGender;
     }
 
     if (preferredPartnerGender !== undefined) {
-      profile.preferredPartnerGender = preferredPartnerGender;
+        profile.preferredPartnerGender = preferredPartnerGender;
     }
 
     await profile.save();
     return profile;
-  }
-
+}
 
 export default queryProfile;
-  //recovered

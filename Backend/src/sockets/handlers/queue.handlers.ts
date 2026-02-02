@@ -1,37 +1,39 @@
 import { Socket } from "socket.io";
-import { enqueueUser, isUserQueued , Gender} from "../../services/queue.service";
+import { enqueueUser, isUserQueued } from "../../services/queue.service";
 import { getlimit } from "../../services/limits.service";
-
-type QueuePreference = "male" | "female" | "any";
+import queryProfile from "../../services/profile.service";
 
 export async function handleEnterQueue(
-  socket: Socket,
-  preference: QueuePreference
+  socket: Socket
 ) {
   const deviceId = socket.data.deviceId;
 
-  // sanity guard
-  if (!preference) {
-    socket.emit("queue:error", "Preference required");
+  // 1️⃣ Load profile (source of truth)
+  const profile = await queryProfile(deviceId);
+  if (!profile) {
+    socket.emit("queue:error", "Profile not found");
     return;
   }
 
-  // prevent duplicate queueing
-  const alreadyQueued = await isUserQueued(deviceId, preference);
+  const gender = profile.verifiedGender;
+  const preference = profile.preferredPartnerGender;
+
+  // 2️⃣ Prevent duplicate queueing (by gender)
+  const alreadyQueued = await isUserQueued(deviceId, gender);
   if (alreadyQueued) {
     socket.emit("queue:error", "Already in queue");
     return;
   }
 
-  // enforce fairness limits
+  // 3️⃣ Enforce limits (can depend on preference)
   const allowed = await getlimit(deviceId);
   if (!allowed) {
     socket.emit("queue:error", "Daily limit reached");
     return;
   }
 
-  // enqueue
-  await enqueueUser(deviceId, preference);
+  // 4️⃣ Enqueue by identity (gender)
+  await enqueueUser(deviceId, gender);
 
   socket.emit("queue:joined", {
     preference,

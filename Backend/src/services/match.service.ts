@@ -1,12 +1,6 @@
-import { dequeueUser, Gender , getQueuedUsers} from "./queue.service";
+import { dequeueUser , getQueuedUsers} from "./queue.service";
 import redisClient from "../config/redis";
-type Preference = "male" | "female" | "other" | "any";
-
-interface MatchRequest {
-deviceId: string;
-gender: Gender;
-preference: Preference;
-}
+import {MatchRequest,Gender,Preference} from "../domain/types";
 
 async function getCandidates(
 gender: Gender,
