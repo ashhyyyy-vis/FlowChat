@@ -1,13 +1,20 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import connectRedis from './config/redis';
-import app from './app';
-const PORT=process.env.PORT||3000;
+import http from "http";
+import app from "./app";
+import redisClient, { connectRedis } from "./config/redis";
+
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
-  await connectRedis();
+  await connectRedis(); // ✅ THIS is what you call
 
-  app.listen(PORT, () => {
+  // TEMP test (remove later)
+  await redisClient.set("health", "ok");
+  console.log(await redisClient.get("health"));
+
+  const server = http.createServer(app);
+  server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 }
