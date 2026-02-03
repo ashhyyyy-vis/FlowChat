@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AppView, UserProfile, Gender, FilterOption } from './types';
 import { getStableDeviceId, checkSpecificLimit, incrementSpecificUsage, getRemainingSpecificMatches } from './services/deviceService';
 import { verifyGender } from './services/verificationService';
+import { getSocket, disconnectSocket } from './services/socketService';
+import { api } from './services/api';
 import { APP_NAME, MATCH_COOLDOWN_MS } from './constants';
 import Button from './components/Button';
 
@@ -20,6 +22,7 @@ const App: React.FC = () => {
   const [verificationError, setVerificationError] = useState('');
   const [matchFilter, setMatchFilter] = useState<FilterOption>('Any');
   const [queueTime, setQueueTime] = useState(0);
+  const [currentRoomId, setCurrentRoomId] = useState<string | undefined>(undefined);
 
   const [lastExitTime, setLastExitTime] = useState(0);
 
@@ -53,12 +56,28 @@ const App: React.FC = () => {
     }
   };
 
-  const handleProfileComplete = (profile: UserProfile) => {
-    setUserProfile(profile);
-    enterMatchingQueue();
+  const handleProfileComplete = async (profile: UserProfile) => {
+    try {
+      // 1. Send profile to backend (POST /api which maps to onboarding)
+      // The backend expects: { nickName, shortBio, pronouns, preferredPartnerGender }
+      // Note: verification result is checked by backend via deviceId
+
+      await api.post('/', {
+        nickName: profile.nickname,
+        shortBio: profile.bio,
+        pronouns: 'They/Them', // defaulting for now as UI doesn't have it
+        preferredPartnerGender: profile.preferredPartnerGender || 'Any' // You might need to add this to UserProfile
+      });
+
+      setUserProfile(profile);
+      enterMatchingQueue();
+    } catch (error) {
+      console.error("Onboarding failed", error);
+      alert("Failed to create profile. Please try again.");
+    }
   };
 
-  const enterMatchingQueue = () => {
+  const enterMatchingQueue = async () => {
     const timeSinceLastExit = Date.now() - lastExitTime;
     if (lastExitTime > 0 && timeSinceLastExit < MATCH_COOLDOWN_MS) {
       setView(AppView.COOLDOWN);
@@ -68,7 +87,16 @@ const App: React.FC = () => {
     if (matchFilter !== 'Any' && !checkSpecificLimit()) {
       setMatchFilter('Any');
     }
+
     setView(AppView.MATCHING);
+    setQueueTime(0);
+
+    try {
+      const socket = await getSocket();
+      socket.emit("queue:enter");
+    } catch (err) {
+      console.error("Failed to connect to socket", err);
+    }
   };
 
   const handleChatExit = (shouldNext: boolean) => {
@@ -92,20 +120,65 @@ const App: React.FC = () => {
   }, [view]);
 
   useEffect(() => {
-    if (view === AppView.MATCHING) {
-      const minWaitTime = matchFilter === 'Any' ? 2 : 5;
-      const matchProbability = matchFilter === 'Any' ? 0.8 : 0.3;
+    // Socket Event Listeners for Queue & Chat
+    const setupSocket = async () => {
+      const socket = await getSocket();
 
-      if (queueTime > minWaitTime) {
-        if (Math.random() > (1 - matchProbability)) {
-          if (matchFilter !== 'Any') {
-            incrementSpecificUsage();
-          }
-          setView(AppView.CHAT);
+      socket.on("queue:joined", (data) => {
+        // user is in queue
+        console.log("Joined queue:", data);
+      });
+
+      socket.on("queue:matched", (data) => {
+        // This event needs to be handled if backend emits it. 
+        // Assuming backend emits 'room:created' or similar? 
+        // Wait, analysing the backend code...
+        // Backend seems to emit 'room:created' with roomId.
+      });
+
+      socket.on("room:created", ({ roomId, partnerId }) => {
+        // Match found!
+        // In a real app we might fetch partner profile here or receive it in payload.
+        // For now we'll simulate the partner profile since backend might not send it all yet.
+        setCurrentRoomId(roomId);
+        setView(AppView.CHAT);
+
+        // Store roomId in state if needed, or pass it to ChatView
+        // efficient way: update userProfile with currentRoomId (hacky but works)
+        // Better: add a state for activeRoomId
+      });
+
+      socket.on("queue:error", (msg) => {
+        console.error("Queue error:", msg);
+        if (msg === "Daily limit reached") {
+          setView(AppView.LIMIT_REACHED);
+        } else {
+          // fallback
+          setView(AppView.PROFILE_SETUP);
+          alert(msg);
         }
-      }
+      });
+    };
+
+    if (view === AppView.MATCHING) {
+      setupSocket();
     }
-  }, [queueTime, view, matchFilter]);
+
+    return () => {
+      // cleanup listeners if needed, or let them persist
+    };
+  }, [view]);
+
+  // Keep the timer for UI visualization
+  useEffect(() => {
+    let interval: number | undefined;
+    if (view === AppView.MATCHING) {
+      interval = window.setInterval(() => {
+        setQueueTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [view]);
 
   if (view === AppView.LANDING) {
     return <Onboarding onStart={() => setView(AppView.VERIFICATION)} />;
@@ -222,10 +295,11 @@ const App: React.FC = () => {
       <div className="h-screen w-full max-w-2xl mx-auto bg-slate-900 shadow-2xl overflow-hidden relative">
         <ChatView
           partnerProfile={{
-            nickname: strangerName,
-            bio: "Just exploring Klymo.",
-            gender: matchFilter === 'Any' ? 'Unknown' : matchFilter
+            nickname: "Partner", // We don't get this from backend yet in queue:joined?
+            bio: "Connected via Klymo",
+            gender: 'Unknown'
           }}
+          roomId={currentRoomId}
           onLeave={() => handleChatExit(false)}
           onNext={() => handleChatExit(true)}
         />

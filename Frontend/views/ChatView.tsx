@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage, UserProfile } from '../types';
+import { getSocket } from '../services/socketService';
 import Button from '../components/Button';
 import { Icons } from '../constants';
 
 interface ChatViewProps {
   partnerProfile: { nickname: string; bio: string; gender: string };
+  roomId?: string; // Add optional roomId
   onLeave: () => void;
   onNext: () => void;
 }
 
-const ChatView: React.FC<ChatViewProps> = ({ partnerProfile, onLeave, onNext }) => {
+const ChatView: React.FC<ChatViewProps> = (props) => {
+  const { partnerProfile, onLeave, onNext } = props;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Fake "Stranger" messages logic
   const strangerResponses = [
     "Hey there! How's it going?",
@@ -34,11 +37,32 @@ const ChatView: React.FC<ChatViewProps> = ({ partnerProfile, onLeave, onNext }) 
   }, [messages]);
 
   // Initial greeting
+  // Socket Integration
   useEffect(() => {
-    const timer = setTimeout(() => {
-      addMessage('stranger', "Connected! Say hi.");
-    }, 500);
-    return () => clearTimeout(timer);
+    const initChat = async () => {
+      const socket = await getSocket();
+
+      // Handle incoming messages
+      const messageHandler = (data: { from: string, message: string }) => {
+        addMessage('stranger', data.message);
+      };
+
+      // Handle chat ended
+      const endedHandler = (data: { reason: string }) => {
+        addMessage('system', `Chat ended: ${data.reason}`);
+        // Optional: Auto leave after a few seconds?
+      };
+
+      socket.on("chat:message", messageHandler);
+      socket.on("chat:ended", endedHandler);
+
+      return () => {
+        socket.off("chat:message", messageHandler);
+        socket.off("chat:ended", endedHandler);
+      };
+    };
+
+    initChat();
   }, []);
 
   const addMessage = (sender: 'me' | 'stranger' | 'system', text: string) => {
@@ -51,19 +75,42 @@ const ChatView: React.FC<ChatViewProps> = ({ partnerProfile, onLeave, onNext }) 
     setMessages(prev => [...prev, newMsg]);
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    addMessage('me', input);
+    const text = input;
+    addMessage('me', text);
     setInput('');
 
-    // Simulate response delay
-    const delay = Math.random() * 2000 + 1000;
-    setTimeout(() => {
-      const randomResponse = strangerResponses[Math.floor(Math.random() * strangerResponses.length)];
-      addMessage('stranger', randomResponse);
-    }, delay);
+    try {
+      const socket = await getSocket();
+      // We need to know the roomId. 
+      // Current Backend implementation requires roomId for chat:message
+      // If we don't have it passed in props, we might need to rely on 'socket.rooms' logic 
+      // OR backend should infer room from socket in room.
+      // Looking at backend: socket.on("chat:message", ({ roomId, message })
+
+      // Since I don't have the roomId easily in this component yet (it came from App.tsx via event),
+      // I need to assume App.tsx passes it or I can get it.
+      // For now, let's assume we can get it or we update App.tsx to pass it.
+
+      // IMPORTANT: I need to update App.tsx to store roomId.
+      // For this step, I will emit slightly incorrectly until I fix App.tsx state.
+
+      // Determine roomId? 
+      // Actually, let's fetch it from socket rooms if possible? No.
+      // I will add a TODO here and fix App.tsx to pass roomId.
+
+      if (props.roomId) {
+        socket.emit("chat:message", { roomId: props.roomId, message: text });
+      } else {
+        console.warn("No roomId available to send message");
+      }
+
+    } catch (err) {
+      console.error("Failed to send message", err);
+    }
   };
 
   // Helper to render name. 
@@ -93,12 +140,12 @@ const ChatView: React.FC<ChatViewProps> = ({ partnerProfile, onLeave, onNext }) 
           </div>
         </div>
         <div className="flex gap-2">
-           <Button variant="danger" onClick={onLeave} className="!p-2 !rounded-lg" title="Report & Leave">
-             <Icons.XMark />
-           </Button>
-           <Button variant="secondary" onClick={onNext} className="!px-3 !py-2 !text-sm" title="Next Match">
-             Next
-           </Button>
+          <Button variant="danger" onClick={onLeave} className="!p-2 !rounded-lg" title="Report & Leave">
+            <Icons.XMark />
+          </Button>
+          <Button variant="secondary" onClick={onNext} className="!px-3 !py-2 !text-sm" title="Next Match">
+            Next
+          </Button>
         </div>
       </div>
 
@@ -107,17 +154,16 @@ const ChatView: React.FC<ChatViewProps> = ({ partnerProfile, onLeave, onNext }) 
         <div className="text-center text-xs text-slate-600 my-4">
           Chat is end-to-end encrypted. Messages are ephemeral.
         </div>
-        
+
         {messages.map((msg) => (
-          <div 
-            key={msg.id} 
+          <div
+            key={msg.id}
             className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
-              msg.sender === 'me' 
-                ? 'bg-teal-600 text-white rounded-tr-none' 
+            <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${msg.sender === 'me'
+                ? 'bg-teal-600 text-white rounded-tr-none'
                 : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'
-            }`}>
+              }`}>
               {msg.text}
             </div>
           </div>

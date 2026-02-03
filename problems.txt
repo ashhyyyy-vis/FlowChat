@@ -1,0 +1,2 @@
+Frontend\services\deviceService.ts
+line 19, logic could be wrong

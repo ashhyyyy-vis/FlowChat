@@ -20,6 +20,7 @@ export interface UserProfile {
   bio: string;
   verifiedGender?: Gender;
   deviceId: string;
+  preferredPartnerGender?: FilterOption;
 }
 
 export interface ChatMessage {

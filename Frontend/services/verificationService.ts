@@ -1,5 +1,5 @@
 import { VerificationResult, Gender } from "../types";
-import { getStableDeviceId } from "./deviceService";
+import { api } from "./api";
 import { detectGenderFromVideo, loadFaceApiModels } from "./faceApiService";
 
 loadFaceApiModels().catch(console.error);
@@ -52,25 +52,19 @@ const verifyGender = async (imageBase64: string, videoElement?: HTMLVideoElement
   try {
     const blob = base64ToBlob(imageBase64);
     const formData = new FormData();
-    formData.append('image', blob, 'capture.jpg');
+    // Backend expects 'file' not 'image'
+    formData.append('file', blob, 'capture.jpg');
 
-    const deviceId = await getStableDeviceId();
-    const API_URL = 'http://localhost:3000/api/verify';
+    // Using new API client
+    const result = await api.post<any>('/verify', formData, true);
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'device-id': deviceId
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Backend verification failed');
-    }
-
-    const result = await response.json();
-    return result;
+    // Map backend response to VerificationResult
+    return {
+      isVerified: true, // Backend success means verified
+      detectedGender: result.gender,
+      confidence: result.confidence,
+      error: undefined
+    };
 
   } catch (error) {
     console.warn("Backend verification failed, using client-side face-api.js:", error);
