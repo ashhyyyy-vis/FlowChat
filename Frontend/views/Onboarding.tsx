@@ -1,3 +1,5 @@
+//protect the Dolls 🏳️‍⚧️🏳️‍⚧️
+
 import React from 'react';
 import Button from '../components/Button';
 import { Icons } from '../constants';
