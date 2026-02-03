@@ -16,6 +16,7 @@ export const getStableDeviceId = async (): Promise<string> => {
     console.warn("FingerprintJS failed, falling back to UUID", error);
     
     // Fallback logic for adblockers or errors
+    
     let id = localStorage.getItem(FALLBACK_ID_KEY);
     if (!id) {
       id = crypto.randomUUID();
