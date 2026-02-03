@@ -4,7 +4,7 @@ import cors from "cors";
 import deviceIdMiddleware from "./middleware/deviceId";
 import onboardingRoute from "./routes/onboarding.routes";
 import reportRoutes from "./routes/report.routes";
-
+import verificationRoute from "./routes/verification.routes";
 // Create the Express application
 const app = express();
 
@@ -13,8 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use(deviceIdMiddleware);
-app.use(onboardingRoute);
-// app.ts or index.ts
+app.use('/api',onboardingRoute);
+app.use('/api', verificationRoute)
 
 app.use("/api/report", reportRoutes);
 

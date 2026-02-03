@@ -1,19 +1,32 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express'
+import { validateDeviceId } from '../utils/validators/deviceID.validator'
+import { AppError } from '../domain/types'
 
-interface AppError extends Error {
-  status?: number;
+const deviceIdMiddleware = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  try {
+    const rawDeviceId = req.headers['device-id']
+
+    // normalize header value to string | undefined
+    const deviceId = Array.isArray(rawDeviceId)
+      ? rawDeviceId[0]
+      : rawDeviceId
+
+    // throws if invalid
+    validateDeviceId(deviceId)
+
+    // now TS KNOWS this is a string
+    req.deviceId = deviceId as string
+
+    next()
+  } catch (error: any) {
+    const err = error as AppError
+    err.status = 400
+    next(err)
+  }
 }
 
-const deviceIdMiddleware=(req:Request,res:Response,next:NextFunction)=>{
-    const deviceId=req.headers['device-id'];
-    if (!deviceId) {
-      const err = new Error("Device ID is required") as AppError;
-      err.status = 400;
-      return next(err);
-    }
-
-    req.deviceId = Array.isArray(deviceId) ? deviceId[0] : deviceId;
-    next();
-}
-
-export default deviceIdMiddleware;
+export default deviceIdMiddleware

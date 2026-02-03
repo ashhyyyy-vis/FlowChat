@@ -2,13 +2,9 @@
 import axios from 'axios';
 import fs from 'fs';
 import FormData from 'form-data';
-
+import { VerificationResult } from '../domain/types';
 // Define the response type from FastAPI
-interface VerificationResult {
-    isVerified: boolean;
-    detectedGender: string;
-    confidence: number;
-}
+
 
 export async function verifyImage(filePath: string): Promise<VerificationResult> {
     try {

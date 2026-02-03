@@ -19,6 +19,7 @@
     "express": "^5.2.1",
     "form-data": "^4.0.5",
     "mongoose": "^9.1.5",
+    "multer": "^2.0.2",
     "redis": "^5.10.0",
     "redis-cli": "^2.1.2",
     "socket.io": "^4.8.3"
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^20.11.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

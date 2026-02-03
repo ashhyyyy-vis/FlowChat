@@ -3,6 +3,12 @@ import { Document } from 'mongoose';
 export type Gender = "male" | "female" | "other";
 
 export type Preference = "male" | "female" | "any";
+
+export interface VerificationResult {
+    isVerified: boolean;
+    detectedGender: Gender;
+    confidence: number;
+}
 export interface IProfile extends Document {
   deviceId: string;
   nickName: string;
@@ -16,4 +22,8 @@ export interface MatchRequest {
   deviceId: string;
   gender: Gender;
   preference: Preference;
+}
+
+export interface AppError extends Error {
+  status?: number;
 }
